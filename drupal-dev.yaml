@@ -19,8 +19,7 @@ parameter_groups:
 - label: rax-dev-params
   parameters:
   - server_image
-  - ansible_branch
-  - ansible_repo
+  - ansible_source
 
 parameters:
   #Drupal Customization
@@ -32,11 +31,13 @@ parameters:
     constraints:
     - allowed_pattern: "^[a-zA-Z0-9.-]{1,255}.[a-zA-Z]{2,15}$"
       description: Must be a valid domain name
+    immutable: true
   drupal_sitename:
     type: string
     default: Example Site
     label: Site Title
     description: Title to use for Drupal Site
+    immutable: true
   drupal_user:
     type: string
     default: admin
@@ -45,11 +46,13 @@ parameters:
     constraints:
     - allowed_pattern: "^[a-zA-Z0-9]*$"
       description: Only can contain A-Z and 0-9
+    immutable: true
   drupal_email:
     type: string
     default: admin@example.com
     label: Drupal Admin E-mail
     description: E-mail Address for Drupal Admin User
+    immutable: true
   #Advanced Options
   server_flavor:
     type: string
@@ -62,6 +65,7 @@ parameters:
       - 2 GB General Purpose v1
       - 4 GB General Purpose v1
       - 8 GB General Purpose v1
+    immutable: true
   server_image:
     type: string
     default: f4bbbce2-50b0-4b07-bf09-96c175a45f4b
@@ -70,16 +74,13 @@ parameters:
     constraints:
     - allowed_values:
       - f4bbbce2-50b0-4b07-bf09-96c175a45f4b
-  ansible_branch:
+    immutable: true
+  ansible_source:
     type: string
-    default: stable
-    label: Git Branch or Tag for Ansible Roles
-    description: The Ansible Roles will be pulled from Git, using the tag or branch provided
-  ansible_repo:
-    type: string
-    default: https://github.com/rackspace-orchestration-templates/ansible-roles.git
-    label: Git Repo for Ansible Roles
-    description: The Ansible Roles will be pulled from Git, using the repo provided
+    default: http://catalog.rs-heat.com/ansible-roles/ansible-roles.tar.gz
+    label: Ansible Tarball
+    description: The Ansible Roles will be pulled from the location provided
+    immutable: true
 
 resources:
   #Passwords
@@ -109,10 +110,11 @@ resources:
           template: |
             #!/bin/bash
             set -e
-            git clone -b 'tag' --single-branch --progress repository /etc/ansible/roles > $heat_outputs_path.results 2>&1
+            mkdir -p /etc/ansible/roles
+            wget ansible_source -O /tmp/ansible-roles.tar.gz 2>&1
+            tar -xf /tmp/ansible-roles.tar.gz --strip-components=1 -C /etc/ansible/roles
           params:
-            tag: { get_param: ansible_branch}
-            repository: { get_param: ansible_repo }
+            ansible_source: { get_param: ansible_source }
   drupal_config:
     type: OS::Heat::SoftwareConfig
     properties:
