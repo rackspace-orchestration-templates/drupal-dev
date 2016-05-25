@@ -2,7 +2,7 @@ schema-version: 1.0.0
 application-family: CMS
 application-name: Drupal
 application-version: latest
-flavor: Production
+flavor: Development
 flavor-weight: 2
 popularity: 5
 reach-info:
